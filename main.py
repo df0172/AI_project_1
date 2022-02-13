@@ -34,17 +34,20 @@ class Car(object):
         self.current_passenger = current_passenger
 
 # Reservation struct.
-class Reservation:
-    def __init__(self, pick_up, drop_off, time):
-        self.pick_up = null
-        self.drop_off = null
-        self.time = null
+class Reservation(object):
+    def __init__(self, pick_up, drop_off, hour, min):
+        self.pick_up = pick_up
+        self.drop_off = drop_off
+        self.hour = hour
+        self.min = min
 
 # Pick-up and drop-off generator
 def rand_loc():
     num = random.randint(0,199)
     return num
-
+def rand_min():
+    num = random.randint(1,61)
+    return num
 # Reservation generator.
 def reservation_gen():
     temp_pick = rand_loc()
@@ -56,7 +59,7 @@ def reservation_gen():
     res.pick_up = temp_pick
     res.drop_off = temp_drop
 
-    logging.info('Reservation created')
+
         
     
 
@@ -69,12 +72,23 @@ for obj in car_list:
     print("Car number: ", obj.car_num, "| Position: ", obj.current_pos)
 
 
+res_database = [] # instance of reservation class
 
-res = Reservation()
-for x in range(30):
-    reservation_gen()
-    print("-------------------")
-    print("Reservation: ", x)
-    print("Pick up: ", res.pick_up)
-    print("Drop off: ", res.drop_off)
+res_range = random.randint(100, 150) # randomly creates the # of reservation between 100 - 150.
+for x in range(8):
+    for j in range(res_range):
+        res_database.append(Reservation(rand_loc(), rand_loc(), x, rand_min() ))
+"""
+for obj in res_database:
+    print("Reservation: #", obj)
+    print("Pick up: ", obj.pick_up, "| Drop off: ", obj.drop_off, "| Hour/Min/Sec: ",obj.hour,":",obj.min,":00")
+"""
 
+res_database.sort(key = min)
+
+text_file = open("input.txt", "w")
+for obj in res_database:
+    #text_file.write("Reservation: #", obj)
+    string = "Pick up: "+ str(obj.pick_up)+"| Drop off: "+ str(obj.drop_off)+ "| Hour/Min/Sec: "+str(obj.hour)+":"+str(obj.min)+":00\n"
+    text_file.write(string)
+text_file.close()
