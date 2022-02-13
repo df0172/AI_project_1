@@ -25,15 +25,11 @@ MXG4 = nx.DiGraph(G)
 print(nx.dijkstra_path(MXG4, 23, 150))
 print(nx.dijkstra_path(MXG4, 45, 23))
 """
-# Car are refrenced by alphabets
-class Car(object):
-    def __init__(self, car_num, current_pos, passenger_limit, current_passenger):
-        self.car_num = car_num
-        self.current_pos = current_pos
-        self.passenger_limit = passenger_limit
-        self.current_passenger = current_passenger
 
-# Reservation struct.
+res_database = [] # Reservation List Declaration
+car_list = [] # Vehicle List Declaration
+
+# Reservation struct
 class Reservation(object):
     def __init__(self, pick_up, drop_off, hour, min):
         self.pick_up = pick_up
@@ -41,54 +37,58 @@ class Reservation(object):
         self.hour = hour
         self.min = min
 
-# Pick-up and drop-off generator
+# Class Struct
+class Car(object):
+    def __init__(self, car_num, current_pos, passenger_limit, current_passenger):
+        self.car_num = car_num
+        self.current_pos = current_pos
+        self.passenger_limit = passenger_limit
+        self.current_passenger = current_passenger
+
+
+# Random Location Generator
 def rand_loc():
     num = random.randint(0,199)
     return num
+
+# Random Minute Generator
 def rand_min():
-    num = random.randint(1,61)
+    num = random.randint(0,59)
     return num
-# Reservation generator.
+
+# Reservation Generator
 def reservation_gen():
-    temp_pick = rand_loc()
-    temp_drop = rand_loc()
-    while temp_drop == temp_pick:
-        temp_drop = rand_loc()
+    for x in range(8):
+        temp_list = []
+        res_range = random.randint(100, 150) # randomly creates the # of reservation between 100 - 150.
+    
+        for j in range(res_range):
+            temp_list.append(rand_min())
+        temp_list = sorted(temp_list)
+    
+        for k in range(res_range):
+            res_database.append(Reservation(rand_loc(), rand_loc(), x, temp_list[k]))
+        temp_list.clear()
 
-    res = Reservation()    
-    res.pick_up = temp_pick
-    res.drop_off = temp_drop
-
-
-        
+def file_output():
+    text_file = open("input.txt", "w")
+    for obj in res_database:
+        #text_file.write("Reservation: #", obj)
+        string = "Pick up: "+ str(obj.pick_up)+"| Drop off: "+ str(obj.drop_off)+ "| Hour/Min/Sec: "+str(obj.hour)+":"+str(obj.min)+":00\n"
+        text_file.write(string)
+    text_file.close()
     
 
 # main class.
 
-car_list = []
 for x in range(30):
     car_list.append(Car(x, rand_loc(), 5 ,0))
 for obj in car_list:
     print("Car number: ", obj.car_num, "| Position: ", obj.current_pos)
 
+reservation_gen()
+file_output()
 
-res_database = [] # instance of reservation class
 
-res_range = random.randint(100, 150) # randomly creates the # of reservation between 100 - 150.
-for x in range(8):
-    for j in range(res_range):
-        res_database.append(Reservation(rand_loc(), rand_loc(), x, rand_min() ))
-"""
-for obj in res_database:
-    print("Reservation: #", obj)
-    print("Pick up: ", obj.pick_up, "| Drop off: ", obj.drop_off, "| Hour/Min/Sec: ",obj.hour,":",obj.min,":00")
-"""
 
-res_database.sort(key = min)
 
-text_file = open("input.txt", "w")
-for obj in res_database:
-    #text_file.write("Reservation: #", obj)
-    string = "Pick up: "+ str(obj.pick_up)+"| Drop off: "+ str(obj.drop_off)+ "| Hour/Min/Sec: "+str(obj.hour)+":"+str(obj.min)+":00\n"
-    text_file.write(string)
-text_file.close()
