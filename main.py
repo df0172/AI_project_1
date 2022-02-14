@@ -3,6 +3,7 @@ from nis import cat
 from anyio import current_time
 import networkx as nx
 import matplotlib.pyplot as plt
+from numpy import positive
 from sqlalchemy import null
 import random
 import time
@@ -78,6 +79,47 @@ def file_output():
         text_file.write(string)
     text_file.close()
     
+def dispatch():
+    text_file = open("Res.txt", "w")
+    index = 0
+
+    """
+    for hours in range(8):
+        for mins in range (60):
+            found = False
+            while (res_database[index]):
+                while (res_database[index].hour == hours):
+                #print(hours, " ", mins)
+                    while (res_database[index].min == mins):
+                        found = True
+                        string = "Reservation assigned!" + str(hours) + " " + str(mins) + "\n"
+                        text_file.write(string)
+                        index += 1
+                
+                if (found == False):
+                    index += 1
+                break
+    """
+    curr_hours = 0
+    while (res_database[index]):
+        curr_mins = 0
+        while (res_database[index].hour == curr_hours and curr_hours < 8):
+            found = False
+            while (res_database[index].min == curr_mins and curr_mins < 60):
+                found = True
+                print (curr_hours, " ", curr_mins)
+                index += 1
+            if (found == False):
+                index += 1
+            curr_mins += 1
+        curr_hours += 1
+
+
+
+
+
+
+
 
 # main class.
 
@@ -88,7 +130,4 @@ for obj in car_list:
 
 reservation_gen()
 file_output()
-
-
-
-
+dispatch()
