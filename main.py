@@ -70,6 +70,9 @@ def reservation_gen():
         for k in range(res_range):
             res_database.append(Reservation(rand_loc(), rand_loc(), x, temp_list[k]))
         temp_list.clear()
+    res_database.append(Reservation(0, 0, 5, null))
+
+
 
 def file_output():
     text_file = open("input.txt", "w")
@@ -80,46 +83,19 @@ def file_output():
     text_file.close()
     
 def dispatch():
-    text_file = open("Res.txt", "w")
     index = 0
-
-    """
     for hours in range(8):
         for mins in range (60):
-            found = False
-            while (res_database[index]):
-                while (res_database[index].hour == hours):
-                #print(hours, " ", mins)
-                    while (res_database[index].min == mins):
-                        found = True
-                        string = "Reservation assigned!" + str(hours) + " " + str(mins) + "\n"
-                        text_file.write(string)
+            if (res_database[index].hour == hours and res_database[index+1]):
+                found = False
+                while (res_database[index].min == mins and res_database[index+1]):
+                    found = True
+                    print (hours, " ", mins, "Reservation Assigned!")
+                    if (index+1 < len(res_database)):
                         index += 1
-                
-                if (found == False):
+                if (found == False and index+1 < len(res_database)):
                     index += 1
-                break
-    """
-    curr_hours = 0
-    while (res_database[index]):
-        curr_mins = 0
-        while (res_database[index].hour == curr_hours and curr_hours < 8):
-            found = False
-            while (res_database[index].min == curr_mins and curr_mins < 60):
-                found = True
-                print (curr_hours, " ", curr_mins)
-                index += 1
-            if (found == False):
-                index += 1
-            curr_mins += 1
-        curr_hours += 1
-
-
-
-
-
-
-
+    
 
 # main class.
 
@@ -131,3 +107,26 @@ for obj in car_list:
 reservation_gen()
 file_output()
 dispatch()
+
+
+
+
+
+
+"""
+Old Dispatch Code
+    curr_hours = 0
+    while (index < len(res_database)):
+        curr_mins = 0
+        while (res_database[index].hour == curr_hours and curr_hours < 8):
+            while (index < len(res_database)):
+                found = False
+                while (res_database[index].min == curr_mins and curr_mins < 60):
+                    found = True
+                    print (curr_hours, " ", curr_mins, "Reservation Assigned!")
+                    index += 1
+                if (found == False):
+                    index += 1
+                curr_mins += 1
+        curr_hours += 1
+ """
