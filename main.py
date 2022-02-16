@@ -107,25 +107,27 @@ def dispatch():
 
                     if (index+1 < len(res_database)):
                         index += 1
-
+        # Drive() - (Pop() first index from path, Next stop for each car, Picking up anyone, Dropping off anyone, Add 1 to stops travelled for each car travelled)
   
                 
 
 def car_assign(index):
     
     car_index = null
-    value = -1
+    value = 200
    
     for x in range(30):
-        #print(car_list[x].current_pos, "-")
-        temp = nx.shortest_path_length(G, car_list[x].current_pos, res_database[index].pick_up)
-        
-        if temp < value and temp !=0 and car_list[x].current_passenger < 5:
-            value = temp
-            car_index = x
+        if nx.has_path(G, car_list[x].current_pos, res_database[index].drop_off):
+            temp = nx.shortest_path_length(G, car_list[x].current_pos, res_database[index].pick_up)
+            if temp < value and temp !=0 and car_list[x].current_passenger < 5:
+                value = temp
+                car_index = x
     
     if car_index != null:
         car_list[car_index].reservation.append(index)
+        car_list[car_index].current_passenger += 1 
+        # Route_Optimization() - Optimize and update path
+
 
     for obj in car_list:
         print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| res: ", obj.reservation)   
@@ -146,8 +148,8 @@ car_gen()
 reservation_gen()
 file_output()
 dispatch()
-index =5
-if nx.has_path(G, res_database[5].pick_up, res_database[5].drop_off):
+index = 5
+if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
     car_assign(index)
 
 
