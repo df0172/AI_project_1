@@ -9,7 +9,9 @@ import random
 import time
 import logging
 
-"""
+from sympy import reduce_abs_inequalities
+
+
 G = nx.gnp_random_graph(200, .02, seed=1000)
 
 
@@ -20,12 +22,10 @@ pos = nx.spring_layout(G)
 nx.draw_networkx_nodes(G, pos, node_size=500)
 nx.draw_networkx_edges(G, pos, edgelist=G.edges(), edge_color='green', )
 nx.draw_networkx_labels(G, pos)
-##plt.show()
+#plt.show()
 
-MXG4 = nx.DiGraph(G)
-print(nx.dijkstra_path(MXG4, 23, 150))
-print(nx.dijkstra_path(MXG4, 45, 23))
-"""
+
+
 
 res_database = [] # Reservation List Declaration
 car_list = [] # Vehicle List Declaration
@@ -40,11 +40,14 @@ class Reservation(object):
 
 # Class Struct
 class Car(object):
-    def __init__(self, car_num, current_pos, passenger_limit, current_passenger):
+    def __init__(self, car_num, current_pos, passenger_limit, current_passenger, node_traveled, reservation = [], current_path = []):
         self.car_num = car_num
         self.current_pos = current_pos
         self.passenger_limit = passenger_limit
         self.current_passenger = current_passenger
+        self.node_traveled = node_traveled
+        self.reservation = reservation
+        self.current_path = current_path
 
 
 # Random Location Generator
@@ -72,6 +75,14 @@ def reservation_gen():
         temp_list.clear()
     res_database.append(Reservation(0, 0, 5, null))
 
+def car_gen():
+
+    for x in range(30):
+        num = rand_loc()
+        while nx.degree(G, num) == 0:
+            num = rand_loc()
+        car_list.append(Car(x, rand_loc(), 5 ,0, 0, reservation=[], current_path=[]))
+    
 
 
 def file_output():
@@ -86,47 +97,63 @@ def dispatch():
     index = 0
     for hours in range(8):
         for mins in range (60):
-            if (res_database[index].hour == hours and res_database[index+1]):
+            if (res_database[index].hour == hours):
                 found = False
-                while (res_database[index].min == mins and res_database[index+1]):
+                while (res_database[index].min == mins):
                     found = True
-                    print (hours, " ", mins, "Reservation Assigned!")
+                    if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
+                        num =0
+                        #car_assign(index)
+
                     if (index+1 < len(res_database)):
                         index += 1
-                if (found == False and index+1 < len(res_database)):
-                    index += 1
+
+  
+                
+
+def car_assign(index):
     
+    car_index = null
+    value = -1
+   
+    for x in range(30):
+        #print(car_list[x].current_pos, "-")
+        temp = nx.shortest_path_length(G, car_list[x].current_pos, res_database[index].pick_up)
+        
+        if temp < value and temp !=0 and car_list[x].current_passenger < 5:
+            value = temp
+            car_index = x
+    
+    if car_index != null:
+        car_list[car_index].reservation.append(index)
+
+    for obj in car_list:
+        print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| res: ", obj.reservation)   
+   
+
+
+       
+        
+ 
+    
+
+
 
 # main class.
 
-for x in range(30):
-    car_list.append(Car(x, rand_loc(), 5 ,0))
-for obj in car_list:
-    print("Car number: ", obj.car_num, "| Position: ", obj.current_pos)
 
+car_gen()
 reservation_gen()
 file_output()
 dispatch()
-
-
-
+index =5
+if nx.has_path(G, res_database[5].pick_up, res_database[5].drop_off):
+    car_assign(index)
 
 
 
 """
-Old Dispatch Code
-    curr_hours = 0
-    while (index < len(res_database)):
-        curr_mins = 0
-        while (res_database[index].hour == curr_hours and curr_hours < 8):
-            while (index < len(res_database)):
-                found = False
-                while (res_database[index].min == curr_mins and curr_mins < 60):
-                    found = True
-                    print (curr_hours, " ", curr_mins, "Reservation Assigned!")
-                    index += 1
-                if (found == False):
-                    index += 1
-                curr_mins += 1
-        curr_hours += 1
- """
+print("the adjancy list:")
+for line in range(200):
+    print(line, "|", nx.degree(G, line))
+    """
