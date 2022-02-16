@@ -3,7 +3,7 @@ from nis import cat
 from anyio import current_time
 import networkx as nx
 import matplotlib.pyplot as plt
-from numpy import positive
+from numpy import empty, positive
 from sqlalchemy import null
 import random
 import time
@@ -127,14 +127,21 @@ def car_assign(index):
         car_list[car_index].reservation.append(index)
         car_list[car_index].current_passenger += 1 
         # Route_Optimization() - Optimize and update path
+        route_optimization(car_index, index)
 
 
     for obj in car_list:
         print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| res: ", obj.reservation)   
    
+def drive():
+    num=0
+
+def route_optimization(car_index, index):
+    path = nx.shortest_path(res_database[index].pick_up, res_database[index].pick_up)
+    if nx.shortest_path_length(G, car_list[car_index].current_pos, ):
 
 
-       
+        
         
  
     
