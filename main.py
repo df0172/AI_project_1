@@ -77,7 +77,7 @@ def reservation_gen():
 
 def car_gen():
 
-    for x in range(30):
+    for x in range(2):
         num = rand_loc()
         while nx.degree(G, num) == 0:
             num = rand_loc()
@@ -112,11 +112,9 @@ def dispatch():
                 
 
 def car_assign(index):
-    
     car_index = null
     value = 200
-   
-    for x in range(30):
+    for x in range(2):
         if nx.has_path(G, car_list[x].current_pos, res_database[index].drop_off):
             temp = nx.shortest_path_length(G, car_list[x].current_pos, res_database[index].pick_up)
             if temp < value and temp !=0 and car_list[x].current_passenger < 5:
@@ -136,29 +134,63 @@ def car_assign(index):
 def drive():
     num=0
 
+def clean_up(car_index):
+    for x in range(0, len(car_list[car_index].current_path)-1):
+        if car_list[car_index].current_path[x] == car_list[car_index].current_path[x-1]:
+            car_list[car_index].current_path.pop(x)
+
 def route_optimization(car_index, index):
-    path = nx.shortest_path(res_database[index].pick_up, res_database[index].pick_up)
-    if nx.shortest_path_length(G, car_list[car_index].current_pos, ):
+    if not car_list[car_index].current_path:
+        car_list[car_index].current_path.extend(nx.shortest_path(G, car_list[car_index].current_pos, res_database[index].pick_up))
+        car_list[car_index].current_path.extend(nx.shortest_path(G, res_database[index].pick_up, res_database[index].drop_off))
+        clean_up(car_index)
+    else:
+        temp = []
+        temp_index = 0
+        for x in car_list[car_index].reservation:
+            temp.append(res_database[car_list[car_index].reservation[temp_index]].pick_up)
+            temp.append(res_database[car_list[car_index].reservation[temp_index]].drop_off)
+            #if car_list[car_index].reservation[temp_index+1]
+            temp_index +=1
+        for x in temp:
+            print (x)
 
 
-        
-        
- 
+        """car_list[car_index].current_path = nx.shortest_path(G, car_list[car_index].current_pos, res_database[index].pick_up)
+        car_list[car_index].current_path = list(set(car_list[car_index].current_path + nx.shortest_path(G, res_database[index].pick_up, res_database[index].drop_off)))
+        print (nx.shortest_path(G, car_list[car_index].current_pos, res_database[index].pick_up))
+        print (nx.shortest_path(G, res_database[index].pick_up, res_database[index].drop_off))
+        for x in car_list[car_index].current_path:
+            print (x)"""
     
 
+    # path = nx.shortest_path(res_database[index].pick_up, res_database[index].pick_up)
+    # if nx.shortest_path_length(G, car_list[car_index].current_pos, ):
 
 
+        
 # main class.
-
 
 car_gen()
 reservation_gen()
 file_output()
 dispatch()
+index = 1
+if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
+    car_assign(index)
+index = 2
+if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
+    car_assign(index)
+index = 3
+if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
+    car_assign(index)
+index = 4
+if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
+    car_assign(index)
 index = 5
 if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
     car_assign(index)
-
+#plt.show()
 
 
 """
