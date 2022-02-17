@@ -40,7 +40,7 @@ class Reservation(object):
 
 # Class Struct
 class Car(object):
-    def __init__(self, car_num, current_pos, passenger_limit, current_passenger, node_traveled, reservation = [], current_path = []):
+    def __init__(self, car_num, current_pos, passenger_limit, current_passenger, node_traveled, reservation = [], current_path = [], pending_pick = [], drop_list= []):
         self.car_num = car_num
         self.current_pos = current_pos
         self.passenger_limit = passenger_limit
@@ -48,7 +48,8 @@ class Car(object):
         self.node_traveled = node_traveled
         self.reservation = reservation
         self.current_path = current_path
-
+        self.pending_pick = pending_pick
+        self.drop_list = drop_list
 
 # Random Location Generator
 def rand_loc():
@@ -81,7 +82,7 @@ def car_gen():
         num = rand_loc()
         while nx.degree(G, num) == 0:
             num = rand_loc()
-        car_list.append(Car(x, rand_loc(), 5 ,0, 0, reservation=[], current_path=[]))
+        car_list.append(Car(x, rand_loc(), 5 ,0, 0, reservation=[], current_path=[], pending_pick=[],drop_list=[]))
     
 
 
