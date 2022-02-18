@@ -1,5 +1,6 @@
 from multiprocessing.dummy import current_process
 from nis import cat
+from pickle import TRUE
 from anyio import current_time
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -8,24 +9,17 @@ from sqlalchemy import null
 import random
 import time
 import logging
-
 from sympy import reduce_abs_inequalities
 
 
 G = nx.gnp_random_graph(200, .02, seed=1000)
-
-
-print("---------------")
-
-
+print("*************** GRAPH CREATED ***************")
+print("---------------------------------------------\n")
 pos = nx.spring_layout(G)
 nx.draw_networkx_nodes(G, pos, node_size=500)
 nx.draw_networkx_edges(G, pos, edgelist=G.edges(), edge_color='green', )
 nx.draw_networkx_labels(G, pos)
 #plt.show()
-
-
-
 
 res_database = [] # Reservation List Declaration
 car_list = [] # Vehicle List Declaration
@@ -40,16 +34,15 @@ class Reservation(object):
 
 # Class Struct
 class Car(object):
-    def __init__(self, car_num, current_pos, passenger_limit, current_passenger, node_traveled, reservation = [], current_path = [], pending_pick = [], drop_list= []):
+    def __init__(self, car_num, current_pos, passenger_limit, current_passenger, node_traveled, pending_pick = [], pending_drop = [], current_path = []):
         self.car_num = car_num
         self.current_pos = current_pos
         self.passenger_limit = passenger_limit
         self.current_passenger = current_passenger
         self.node_traveled = node_traveled
-        self.reservation = reservation
-        self.current_path = current_path
         self.pending_pick = pending_pick
-        self.drop_list = drop_list
+        self.pending_drop = pending_drop
+        self.current_path = current_path
 
 # Random Location Generator
 def rand_loc():
@@ -82,7 +75,7 @@ def car_gen():
         num = rand_loc()
         while nx.degree(G, num) == 0:
             num = rand_loc()
-        car_list.append(Car(x, rand_loc(), 5 ,0, 0, reservation=[], current_path=[], pending_pick=[],drop_list=[]))
+        car_list.append(Car(x, rand_loc(), 5 ,0, 0, pending_pick=[],pending_drop=[], current_path=[]))
     
 
 
@@ -93,47 +86,57 @@ def file_output():
         string = "Pick up: "+ str(obj.pick_up)+"| Drop off: "+ str(obj.drop_off)+ "| Hour/Min/Sec: "+str(obj.hour)+":"+str(obj.min)+":00\n"
         text_file.write(string)
     text_file.close()
-    
+
+
 def dispatch():
     index = 0
-    for hours in range(8):
-        for mins in range (60):
+    for hours in range(2):
+        for mins in range (15):
+            next_iteration = True
             if (res_database[index].hour == hours):
                 found = False
-                while (res_database[index].min == mins):
-                    found = True
-                    if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
-                        num =0
-                        #car_assign(index)
-
-                    if (index+1 < len(res_database)):
-                        index += 1
+            while (res_database[index].min <= mins and next_iteration):
+                found = True
+                assign_success = False
+                if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
+                    assign_success = car_assign(index)
+                if (index+1 < len(res_database) and assign_success == True):
+                    index += 1
+                else:
+                    next_iteration = False
+            drive()
         # Drive() - (Pop() first index from path, Next stop for each car, Picking up anyone, Dropping off anyone, Add 1 to stops travelled for each car travelled)
   
                 
+def drive():
+    print("Driving!")
+
 
 def car_assign(index):
     car_index = null
+    assigned = False
     value = 200
     for x in range(2):
-        if nx.has_path(G, car_list[x].current_pos, res_database[index].drop_off):
+        if nx.has_path(G, car_list[x].current_pos, res_database[index].pick_up):
             temp = nx.shortest_path_length(G, car_list[x].current_pos, res_database[index].pick_up)
             if temp < value and temp !=0 and car_list[x].current_passenger < 5:
                 value = temp
                 car_index = x
     
     if car_index != null:
-        car_list[car_index].reservation.append(index)
+        car_list[car_index].pending_pick.append(index)
         car_list[car_index].current_passenger += 1 
+        assigned = True
         # Route_Optimization() - Optimize and update path
         route_optimization(car_index, index)
 
+    print ("Index: ", index)
 
     for obj in car_list:
-        print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| res: ", obj.reservation)   
-   
-def drive():
-    num=0
+        print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| Pending Pick: ", obj.pending_pick)  
+        print("---------------------------------------------")
+    return assigned
+
 
 def clean_up(car_index):
     for x in range(0, len(car_list[car_index].current_path)-1):
@@ -141,6 +144,7 @@ def clean_up(car_index):
             car_list[car_index].current_path.pop(x)
 
 def route_optimization(car_index, index):
+    print("Entered Route Optimization")
     if not car_list[car_index].current_path:
         car_list[car_index].current_path.extend(nx.shortest_path(G, car_list[car_index].current_pos, res_database[index].pick_up))
         car_list[car_index].current_path.extend(nx.shortest_path(G, res_database[index].pick_up, res_database[index].drop_off))
@@ -148,13 +152,14 @@ def route_optimization(car_index, index):
     else:
         temp = []
         temp_index = 0
-        for x in car_list[car_index].reservation:
+        
+        """for x in car_list[car_index].reservation:
             temp.append(res_database[car_list[car_index].reservation[temp_index]].pick_up)
             temp.append(res_database[car_list[car_index].reservation[temp_index]].drop_off)
             #if car_list[car_index].reservation[temp_index+1]
             temp_index +=1
         for x in temp:
-            print (x)
+            print (x)"""
 
 
         """car_list[car_index].current_path = nx.shortest_path(G, car_list[car_index].current_pos, res_database[index].pick_up)
@@ -163,35 +168,14 @@ def route_optimization(car_index, index):
         print (nx.shortest_path(G, res_database[index].pick_up, res_database[index].drop_off))
         for x in car_list[car_index].current_path:
             print (x)"""
-    
 
-    # path = nx.shortest_path(res_database[index].pick_up, res_database[index].pick_up)
-    # if nx.shortest_path_length(G, car_list[car_index].current_pos, ):
-
-
-        
+      
 # main class.
-
+index = 0
 car_gen()
 reservation_gen()
 file_output()
 dispatch()
-index = 1
-if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
-    car_assign(index)
-index = 2
-if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
-    car_assign(index)
-index = 3
-if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
-    car_assign(index)
-index = 4
-if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
-    car_assign(index)
-index = 5
-if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
-    car_assign(index)
-#plt.show()
 
 
 """
