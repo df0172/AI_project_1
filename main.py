@@ -167,25 +167,36 @@ def clean_up(car_index):
 
 def route_optimization(car_index):
     print("Entered Route Optimization")
-    temp_list = []
-    pick_up = True
+    pick_up = False
+    drop_off = False
     temp_index = -1
     path_len = 200
-
-    temp_list = car_list[car_index].pending_pick
-    temp_list.extend(car_list[car_index].pending_drop)
-
-    print(*temp_list)
-    for x in range(len(temp_list)):
-        temp_len = nx.shortest_path_length(G, car_list[car_index].current_pos, res_database[temp_list[x]].pick_up)
+    
+    for x in range(len(car_list[car_index].pending_pick)):
+        temp_len = nx.shortest_path_length(G, car_list[car_index].current_pos, res_database[car_list[car_index].pending_pick[x]].pick_up)
         if (temp_len < path_len and temp_len != 0):
+            pick_up = True
+            path_len = temp_len
+            temp_index = x
+    
+    for x in range(len(car_list[car_index].pending_drop)):
+        temp_len = nx.shortest_path_length(G, car_list[car_index].current_pos, res_database[car_list[car_index].pending_pick[x]].drop_off)
+        if (temp_len < path_len and temp_len != 0):
+            drop_off = True
             path_len = temp_len
             temp_index = x
 
-    if (temp_index != -1):
+    if (pick_up and not drop_off and temp_index != -1):
         car_list[car_index].current_path.clear()
-        car_list[car_index].current_path = nx.shortest_path(G, car_list[car_index].current_pos, res_database[temp_list[temp_index]].pick_up)
-        car_list[car_index].current_path.pop(0)
+        car_list[car_index].current_path = nx.shortest_path(G, car_list[car_index].current_pos, res_database[car_list[car_index].pending_pick[temp_index]].pick_up)
+    
+    elif (pick_up and temp_index != -1 and  drop_off):
+        car_list[car_index].current_path.clear()
+        car_list[car_index].current_path = nx.shortest_path(G, car_list[car_index].current_pos, res_database[car_list[car_index].pending_drop[temp_index]].drop_off)
+
+
+    elif (not pick_up and not drop_off):
+        print ("Error: No path found.")
 
     for x in car_list[car_index].current_path:
         print (x)
