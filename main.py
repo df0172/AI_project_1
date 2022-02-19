@@ -87,11 +87,22 @@ def file_output():
         text_file.write(string)
     text_file.close()
 
+    text_file = open("car.txt", "w")
+    for obj in car_list:
+        string = "Car number: "+ str(obj.car_num) + "| Current Position: "+ str(obj.current_pos) + "| Pending Pick: "+ str(obj.pending_pick) + "| Pending Drop: "+ str(obj.pending_drop) + "\n"
+        text_file.write(string)
+    text_file.close()
+
+    text_file = open("edges.txt", "w")
+    text_file.write(str(G.edges()))
+    text_file.close()
 
 def dispatch():
     index = 0
     for hours in range(2):
+        print ("\nHour: ", hours)
         for mins in range (60):
+            print("\nMins: ", mins, "\n")
             next_iteration = True
             if (res_database[index].hour <= hours):
                 found = False
@@ -110,17 +121,20 @@ def dispatch():
                 
 def drive():
     print("Driving!")
+    for obj in car_list:
+            print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| Pending Pick: ", obj.pending_pick, "| Pending Drop: ", obj.pending_drop)  
+            print("---------------------------------------------")
     for x in range(len(car_list)):
         if (car_list[x].current_path):
             car_list[x].current_pos = car_list[x].current_path[0]
             print ("Current Pos: ", car_list[x].current_pos)
-            for z in range(len(car_list[x].pending_drop)):
+            for z in range(len(car_list[x].pending_drop)-2):
                 if (res_database[car_list[x].pending_drop[z]].drop_off == car_list[x].current_pos):
                     print("Dropping Off")
                     car_list[x].pending_drop.pop(z)
                     car_list[x].current_passenger =- 1
                     route_optimization(x)
-            for y in range(len(car_list[x].pending_pick)):
+            for y in range(len(car_list[x].pending_pick)-2):
                 if (res_database[car_list[x].pending_pick[y]].pick_up == car_list[x].current_pos):
                     print("Picking Up")
                     car_list[x].pending_drop.append(car_list[x].pending_pick[y])
@@ -140,22 +154,20 @@ def car_assign(index):
     for x in range(2):
         if nx.has_path(G, car_list[x].current_pos, res_database[index].pick_up):
             temp = nx.shortest_path_length(G, car_list[x].current_pos, res_database[index].pick_up)
-            if temp < value and temp !=0 and car_list[x].current_passenger < 5:
+            if temp < value and temp !=0 and car_list[x].current_passenger < 6:
                 value = temp
                 car_index = x
     
-    if car_index != null:
+    if car_index != null and car_list[car_index].current_passenger < 6:
         car_list[car_index].pending_pick.append(index)
         car_list[car_index].current_passenger += 1 
         assigned = True
         # Route_Optimization() - Optimize and update path
         route_optimization(car_index)
 
-    print ("Index: ", index)
-
-    for obj in car_list:
+    """for obj in car_list:
         print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| Pending Pick: ", obj.pending_pick, "| Pending Drop: ", obj.pending_drop)  
-        print("---------------------------------------------")
+        print("---------------------------------------------")"""
     return assigned
 
 """
@@ -171,35 +183,36 @@ def route_optimization(car_index):
     drop_off = False
     temp_index = -1
     path_len = 200
-    
-    for x in range(len(car_list[car_index].pending_pick)):
+
+    for x in car_list[car_index].pending_pick:
         temp_len = nx.shortest_path_length(G, car_list[car_index].current_pos, res_database[car_list[car_index].pending_pick[x]].pick_up)
         if (temp_len < path_len and temp_len != 0):
             pick_up = True
             path_len = temp_len
             temp_index = x
     
-    for x in range(len(car_list[car_index].pending_drop)):
+    for x in car_list[car_index].pending_drop:
         temp_len = nx.shortest_path_length(G, car_list[car_index].current_pos, res_database[car_list[car_index].pending_pick[x]].drop_off)
         if (temp_len < path_len and temp_len != 0):
             drop_off = True
             path_len = temp_len
             temp_index = x
 
-    if (pick_up and not drop_off and temp_index != -1):
+    if (pick_up and not drop_off):
         car_list[car_index].current_path.clear()
         car_list[car_index].current_path = nx.shortest_path(G, car_list[car_index].current_pos, res_database[car_list[car_index].pending_pick[temp_index]].pick_up)
-    
-    elif (pick_up and temp_index != -1 and  drop_off):
+        car_list[car_index].current_path.pop(0)
+
+    elif (pick_up and drop_off):
         car_list[car_index].current_path.clear()
         car_list[car_index].current_path = nx.shortest_path(G, car_list[car_index].current_pos, res_database[car_list[car_index].pending_drop[temp_index]].drop_off)
-
+        car_list[car_index].current_path.pop(0)
 
     elif (not pick_up and not drop_off):
         print ("Error: No path found.")
 
-    for x in car_list[car_index].current_path:
-        print (x)
+    print ("Car#: ", car_index, " Current Path: ")
+    print (*car_list[car_index].current_path)
 
 
       

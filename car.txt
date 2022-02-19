@@ -1,0 +1,2 @@
+Car number: 0| Current Position: 95| Pending Pick: []| Pending Drop: []
+Car number: 1| Current Position: 181| Pending Pick: []| Pending Drop: []
