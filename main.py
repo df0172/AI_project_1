@@ -13,14 +13,7 @@ from sympy import reduce_abs_inequalities
 from zmq import THREAD_NAME_PREFIX
 
 
-G = nx.gnp_random_graph(200, .02, seed=1000)
-print("*************** GRAPH CREATED ***************")
-print("---------------------------------------------\n")
-pos = nx.spring_layout(G)
-nx.draw_networkx_nodes(G, pos, node_size=500)
-nx.draw_networkx_edges(G, pos, edgelist=G.edges(), edge_color='green', )
-nx.draw_networkx_labels(G, pos)
-#plt.show()
+
 
 res_database = [] # Reservation List Declaration
 car_list = [] # Vehicle List Declaration
@@ -56,8 +49,8 @@ def rand_min():
     return num
 
 # Reservation Generator
-def reservation_gen():
-    for x in range(8):
+def reservation_gen(res_hour):
+    for x in range(res_hour):
         temp_list = []
         res_range = random.randint(100, 150) # randomly creates the # of reservation between 100 - 150.
     
@@ -70,24 +63,25 @@ def reservation_gen():
         temp_list.clear()
     res_database.append(Reservation(0, 0, 5, -1))
 
-def car_gen():
-    for x in range(30):
+def car_gen(car_count):
+    for x in range(car_count):
         num = rand_loc()
         while nx.degree(G, num) == 0:
             num = rand_loc()
         car_list.append(Car(x, rand_loc(), 5 ,0, 0, pending_pick=[],pending_drop=[], current_path=[]))
     
-def avg_distance():
+def avg_distance(car_count):
     total = 0
-    for x in range(30):
+    for x in range(car_count):
         total = total + car_list[x].node_travelled
-
+    total = total * 0.05
     average = total / 30
+    average = "{:.2}".format(average)
 
-    print("Average distance travelled: ", average)
+    print("Average distance travelled: ", average, "miles.")
 
 def file_output():
-    text_file = open("input.txt", "w")
+    text_file = open("Reservation.txt", "w")
     for obj in res_database:
         #text_file.write("Reservation: #", obj)
         string = "Pick up: "+ str(obj.pick_up)+"| Drop off: "+ str(obj.drop_off)+ "| Hour/Min/Sec: "+str(obj.hour)+":"+str(obj.min)+":00\n"
@@ -104,58 +98,58 @@ def file_output():
     text_file.write(str(G.edges()))
     text_file.close()
 
-def dispatch():
+def dispatch(text_file, car_count, res_hour):
     index = 0
     x = 0
-    for hours in range(12):
-        print ("\nHour: ", hours)
+    for hours in range(res_hour + 4):
         for mins in range (60):
             if (x < len(res_database)):
-                print("\nMins: ", mins, "\n")
+                text_file.write("------------------------------------------------------------------------------------------------------------------------------------------\n")
+                text_file.write("{} {}\n".format("Hour: ", hours))
+                text_file.write("{} {}\n".format("Mins: ", mins))
                 next_iteration = True
                 if (res_database[index].hour <= hours):
                     while (res_database[index].min <= mins and next_iteration):
                         found = True
                         assign_success = False
                         if nx.has_path(G, res_database[index].pick_up, res_database[index].drop_off):
-                            assign_success = car_assign(index)
+                            assign_success = car_assign(index, car_count)
                         else:
-                            print("No path!")
+                            text_file.write("No path!\n")
                             index += 1
                         if (index < len(res_database) and assign_success == True and res_database[index+1].min != -1):
                             index += 1
                         else:
                             next_iteration = False
                 else:
-                    print ("No reservation!")
+                    text_file.write("No reservation!\n")
                 x += 1
             drive()
         # Drive() - (Pop() first index from path, Next stop for each car, Picking up anyone, Dropping off anyone, Add 1 to stops travelled for each car travelled)
   
                 
 def drive():
-    print("Driving!")
+    text_file.write("Driving!\n")
     for obj in car_list:
-            print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| Pending Pick: ", obj.pending_pick, "| Pending Drop: ", obj.pending_drop, "Passengers: ", obj.current_passenger)  
-            print("---------------------------------------------")
+           text_file.write("{} {} {} {} {} {} {} {} {} {}\n".format("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| Pending Pick: ", obj.pending_pick, "| Pending Drop: ", obj.pending_drop, "Passengers: ", obj.current_passenger))     
     for x in range(len(car_list)):
-        print ("Car#: ", x, " Current Path: ")
-        print (*car_list[x].current_path)
+       # print ("Car#: ", x, " Current Path: ")
+        #print (*car_list[x].current_path)
         if (len(car_list[x].current_path) > 0):
             y = 0
             z = 0
             car_list[x].current_pos = car_list[x].current_path[0]
-            print ("Current Pos: ", car_list[x].current_pos)
+            #print ("Current Pos: ", car_list[x].current_pos)
             while z < len(car_list[x].pending_drop):
                 if (res_database[car_list[x].pending_drop[z]].drop_off == car_list[x].current_pos):
                     car_list[x].pending_drop.pop(z)
-                    print("Dropping: ", z)
+                    #print("Dropping: ", z)
                     car_list[x].current_passenger -= 1
                     route_optimization(x)
                 z += 1
             while y < len(car_list[x].pending_pick):
                 if (res_database[car_list[x].pending_pick[y]].pick_up == car_list[x].current_pos):
-                    print("Picking: ", y)
+                    #print("Picking: ", y)
                     car_list[x].pending_drop.append(car_list[x].pending_pick[y])
                     car_list[x].pending_pick.pop(y)
                     route_optimization(x)
@@ -163,14 +157,14 @@ def drive():
             car_list[x].node_travelled += 1
             car_list[x].current_path.pop(0)
         else:
-            print("No Current Path!")
+            text_file.write("No Current Path!\n")
             
 
-def car_assign(index):
+def car_assign(index, car_count):
     car_index = null
     assigned = False
     value = 200
-    for x in range(30):
+    for x in range(car_count):
         if nx.has_path(G, car_list[x].current_pos, res_database[index].pick_up):
             temp = nx.shortest_path_length(G, car_list[x].current_pos, res_database[index].pick_up)
             if temp < value and temp !=0 and car_list[x].current_passenger < 5:
@@ -185,22 +179,15 @@ def car_assign(index):
         route_optimization(car_index)
         car_list[car_index].current_path.pop(0)
     else:
-        print ("Not able to assign!")
+        text_file.write("Not able to assign!\n")
 
-    """for obj in car_list:
-        print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| Pending Pick: ", obj.pending_pick, "| Pending Drop: ", obj.pending_drop)  
-        print("---------------------------------------------")"""
+  
     return assigned
 
-"""
-def clean_up(car_index):
-    for x in range(0, len(car_list[car_index].current_path)-1):
-        if car_list[car_index].current_path[x] == car_list[car_index].current_path[x-1]:
-            car_list[car_index].current_path.pop(x)
-"""
+
 
 def route_optimization(car_index):
-    print("Entered Route Optimization")
+   # print("Entered Route Optimization")
     pick_up = False
     drop_off = False
     temp_index = -1
@@ -235,23 +222,37 @@ def route_optimization(car_index):
 
 
     elif (not pick_up and not drop_off):
-        print ("Error: No path found.")
+        text_file.write("Error: No path found.\n")
 
-    print ("Car#: ", car_index, " Current Path: ")
-    print (*car_list[car_index].current_path)
+    #print ("Car#: ", car_index, " Current Path: ")
+    #print (*car_list[car_index].current_path)
 
 
       
 # main class.
 index = 0
-car_gen()
-reservation_gen()
-file_output()
-dispatch()
-avg_distance()
+text_file = open("Dashboard.txt", "w")
+print("*************** Ride Sharing ***************")
+location = input("Enter number of locations: ")
+frequency = input("Enter location frequency: ")
+res_hours = input("Enter number of hours: ")
+car_count = input("Enter number of cars: ")
 
-"""
-print("the adjancy list:")
-for line in range(200):
-    print(line, "|", nx.degree(G, line))
-    """
+G = nx.gnp_random_graph(int(location), float(frequency), seed=1000)
+
+pos = nx.spring_layout(G)
+nx.draw_networkx_nodes(G, pos, node_size=500)
+nx.draw_networkx_edges(G, pos, edgelist=G.edges(), edge_color='green', )
+nx.draw_networkx_labels(G, pos)
+#plt.show()
+
+print("Graph created!")
+print("---------------------------------------------")
+
+car_gen(int(car_count))
+reservation_gen(int(res_hours))
+file_output()
+dispatch(text_file, int(car_count), int(res_hours))
+avg_distance(int(car_count))
+
+text_file.close()

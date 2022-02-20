@@ -1,0 +1,18 @@
+"""
+def clean_up(car_index):
+    for x in range(0, len(car_list[car_index].current_path)-1):
+        if car_list[car_index].current_path[x] == car_list[car_index].current_path[x-1]:
+            car_list[car_index].current_path.pop(x)
+"""
+
+  """for obj in car_list:
+        print("Car number: ", obj.car_num, "| Position: ", obj.current_pos, "| Pending Pick: ", obj.pending_pick, "| Pending Drop: ", obj.pending_drop)  
+        print("---------------------------------------------")"""
+
+
+
+"""
+print("the adjancy list:")
+for line in range(200):
+    print(line, "|", nx.degree(G, line))
+    """
